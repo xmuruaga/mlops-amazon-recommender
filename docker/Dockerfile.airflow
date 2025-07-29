@@ -1,0 +1,11 @@
+# ─────────────────────────────────────────
+# 1️⃣  Base image
+# ─────────────────────────────────────────
+FROM apache/airflow:2.8.4-python3.11
+
+# Add the MLflow provider (no root, no git needed!)
+USER airflow
+RUN pip install --no-cache-dir airflow-provider-mlflow==1.1.0
+
+# Copy DAGs last
+COPY dags/ /opt/airflow/dags

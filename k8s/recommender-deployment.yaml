@@ -1,0 +1,45 @@
+# k8s/recommender-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommender-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: recommender-api
+  template:
+    metadata:
+      labels:
+        app: recommender-api
+    spec:
+      containers:
+      - name: recommender-api
+        image: <your-registry>/recommender-api:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: S3_CONN_ID
+          value: "aws_default"
+        - name: ARTIFACTS_DIR
+          value: "/app"
+        volumeMounts:
+        - mountPath: /app
+          name: model-storage
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: model-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommender-svc
+spec:
+  selector:
+    app: recommender-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: LoadBalancer

@@ -1,0 +1,71 @@
+
+services:
+  # 1️⃣ FastAPI  ─────────────────────────────────────────────
+  fastapi:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    image: mlops-amazon-recommender-fastapi
+    command: ["uvicorn", "app.app:app",
+              "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports: ["8000:8000"]
+    volumes: ["./app:/code/app"]
+
+  # 2️⃣ Streamlit  ───────────────────────────────────────────
+  streamlit:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.streamlit
+    image: mlops-amazon-recommender-streamlit
+    depends_on: [fastapi]
+    environment:
+      API_URL: http://fastapi:8000
+    ports: ["8501:8501"]
+
+  # 3️⃣ MLflow  – unchanged  ────────────────────────────────
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.11.1
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0 --port 5000
+    ports: ["5000:5000"]
+    volumes:
+      - mlflow-artifacts:/mlflow/artifacts
+      - ./mlflow_data/mlflow.db:/mlflow.db
+
+  # 4️⃣ Airflow – unchanged  ────────────────────────────────
+  airflow:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.airflow
+    image: mlops-amazon-recommender-airflow
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+    command: ["airflow", "standalone"]
+    ports: ["8080:8080"]
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - airflow-db:/opt/airflow
+
+  # 5️⃣ Welcome banner  – unchanged  ─────────────────────────
+  banner:
+    image: busybox:latest
+    depends_on: [fastapi, streamlit, mlflow, airflow]
+    entrypoint: >
+      sh -c '
+        printf "\n\033[1mFastAPI   \033[0m→ http://localhost:8000/docs\n";
+        printf "\033[1mStreamlit \033[0m→ http://localhost:8501\n";
+        printf "\033[1mMLflow    \033[0m→ http://localhost:5000\n";
+        printf "\033[1mAirflow   \033[0m→ http://localhost:8080  (admin / admin)\n\n";
+      '
+
+volumes:
+  mlflow-artifacts:
+  airflow-db:

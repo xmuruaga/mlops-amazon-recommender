@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.git/
+.venv/
+logs/
+mlruns/
+mlflow.db
+airflow.db

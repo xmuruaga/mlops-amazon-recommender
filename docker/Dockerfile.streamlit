@@ -1,0 +1,32 @@
+# docker/Dockerfile.streamlit
+# ───────────────────────────
+###############################################################################
+# Stage 1 – shared Python environment (≈ your old amazon_recomm_base image)
+###############################################################################
+FROM python:3.11-slim AS base
+
+# Install system build tools only once
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install every Python library the front‑end (and the API) needs
+WORKDIR /code
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+###############################################################################
+# Stage 2 – final Streamlit image
+###############################################################################
+FROM base AS runtime
+
+WORKDIR /code/app
+COPY app/              ./              
+COPY data/raw/Reviews.csv  data/raw/  
+
+# Tell the UI where the FastAPI lives *inside the Compose network*
+ENV API_URL=http://fastapi:8000
+
+# ————————————————————————————————————————————————————————————————
+# Nothing left to install; start the dashboard
+CMD ["streamlit", "run", "app_front.py", "--server.port=8501", "--server.address=0.0.0.0"]

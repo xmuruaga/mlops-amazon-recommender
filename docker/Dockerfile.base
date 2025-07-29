@@ -1,0 +1,12 @@
+FROM python:3.11-slim
+
+# Optional: minimal build tools for Python wheels
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential git \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /code
+
+COPY requirements.txt /code/
+RUN pip install --no-cache-dir -r requirements.txt

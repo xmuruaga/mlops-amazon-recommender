@@ -1,0 +1,19 @@
+###############################################################################
+# Stage 1 – shared Python environment
+###############################################################################
+FROM python:3.11-slim AS base
+WORKDIR /code
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+
+###############################################################################
+# Stage 2 – runtime
+###############################################################################
+FROM base AS runtime
+
+WORKDIR /code
+COPY ./app ./app
+COPY ./artifacts ./artifacts
+
+CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

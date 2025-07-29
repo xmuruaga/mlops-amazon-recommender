@@ -1,0 +1,29 @@
+# Core ML/data
+scikit-learn
+scipy
+pandas
+numpy
+matplotlib
+seaborn
+evidently
+mlflow
+
+# API (FastAPI)
+fastapi
+uvicorn[standard]
+pydantic
+prometheus_client
+python-multipart
+requests
+
+# Airflow
+apache-airflow==3.0.3
+
+# Dev/test
+pytest
+PyYAML
+notebook
+kaggle
+
+# Frontend (Streamlit demo)
+streamlit

@@ -1,0 +1,38 @@
+name: API CI/CD
+
+on:
+  push:
+    paths:
+      - 'app/app.py'
+      - 'app/schemas.py'
+      - 'app/Dockerfile'
+      - 'requirements.txt'
+      - 'k8s/recommender-deployment.yaml'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install & Lint
+        run: |
+          pip install -U pip
+          pip install flake8 pytest
+          flake8 app/app.py app/schemas.py
+      - name: Test FastAPI
+        run: |
+          pip install fastapi uvicorn pytest httpx
+          pytest tests/api   # Add basic tests for endpoints
+      - name: Build & Push Docker Image
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          tags: ${{ secrets.REGISTRY }}/recommender-api:${{ github.sha }}
+      - name: Kubernetes Deploy
+        uses: some/k8s-deploy-action@v1
+        with:
+          manifests: k8s/recommender-deployment.yaml
+          kubeconfig: ${{ secrets.KUBECONFIG }}

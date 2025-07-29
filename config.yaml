@@ -1,0 +1,14 @@
+# config.yaml
+paths:
+  raw_csv:       "../data/raw/Reviews.csv"
+  artifacts_dir: "../artifacts/models"
+
+dataset:
+  n_users:       5000          # keep top‑N active users
+  n_items:       10000         # keep top‑N popular products
+  min_user:      5             # drop users with <5 reviews
+  min_item:      10            # drop items with <10 reviews
+
+model:
+  svd_components: 50
+  knn_neighbors:  5
